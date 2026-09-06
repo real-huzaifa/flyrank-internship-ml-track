@@ -1,0 +1,41 @@
+{
+  "question": "Can a model rank pages by next-month impression decline better than a hand-written rule?",
+  "as_of_date": "2026-03-31",
+  "feature_window": "2026-03-01..2026-03-31",
+  "label_window": "2026-04-01..2026-04-30",
+  "label_definition": "April daily impressions < 0.80 x March daily impressions",
+  "n_pages": 116539,
+  "n_clients": 40,
+  "base_rate": 0.5044,
+  "validation": "GroupKFold(5) grouped by client_hash_id",
+  "grouped_auc": 0.7298,
+  "random_split_auc": 0.7493,
+  "grouped_vs_random_gap": 0.0195,
+  "random_ranking_p50": 0.508,
+  "results": {
+    "rule_baseline": {
+      "roc_auc": 0.6404,
+      "p_at_50": 0.856,
+      "p_at_100": 0.864
+    },
+    "logistic": {
+      "roc_auc": 0.7,
+      "p_at_50": 0.892,
+      "p_at_100": 0.876
+    },
+    "gradient_boosting": {
+      "roc_auc": 0.7298,
+      "p_at_50": 0.92,
+      "p_at_100": 0.912
+    }
+  },
+  "top_features": [
+    "mar_last_week_share",
+    "mar_daily_impr",
+    "mar_avg_position"
+  ],
+  "auc_without_top_feature": 0.6948,
+  "dead_feature_reported": "mar_active_share (constant at 1.0, zero importance)",
+  "seeds": "random_state=0",
+  "sklearn": "1.6.1"
+}
