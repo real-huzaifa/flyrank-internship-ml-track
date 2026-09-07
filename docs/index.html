@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which pages should an editor fix first? Ranking search-traffic decline across 116,539 pages</title>
+<meta name="description" content="A gradient-boosted model ranks web pages by next-month organic impression decline at precision@50 of 0.920, against a 0.504 base rate and a 0.856 hand-written rule baseline. Client-grouped validation on the FlyRank ML Internship dataset.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#131A24;
+    --ink:#E9EBE7;
+    --muted:#93A1B0;
+    --rule:#293441;
+    --opposite:#E0705F;
+    --confirmed:#54B992;
+    --wash:#1B2430;
+    --plate:#F4F5F1;
+    --measure:68ch;
+  }
+  *{box-sizing:border-box}
+  ::selection{background:#2E3D4D;color:#fff}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Newsreader",Georgia,serif;
+    font-size:19px;
+    line-height:1.62;
+    font-variant-numeric:tabular-nums;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:0 28px}
+  .measure{max-width:var(--measure)}
+
+  /* ---------- masthead ---------- */
+  header.masthead{padding:88px 0 0}
+  .kicker{
+    font-family:"Inter",system-ui,sans-serif;
+    font-size:13px;letter-spacing:.01em;color:var(--muted);
+    margin:0 0 22px;
+  }
+  h1{
+    font-weight:500;
+    font-size:clamp(2.1rem,5.2vw,3.15rem);
+    line-height:1.1;
+    letter-spacing:-.021em;
+    margin:0 0 20px;
+    max-width:19ch;
+  }
+  .standfirst{
+    font-size:1.16rem;color:var(--muted);margin:0 0 34px;
+    max-width:56ch;line-height:1.5;
+  }
+  .byline{
+    font-family:"Inter",system-ui,sans-serif;font-size:13.5px;
+    color:var(--muted);padding:18px 0 0;border-top:1px solid var(--rule);
+    display:flex;flex-wrap:wrap;gap:6px 22px;
+  }
+  .byline a{color:var(--ink)}
+
+  /* ---------- headline result strip ---------- */
+  .result{
+    margin:52px 0 0;padding:30px 32px;
+    background:var(--wash);border:1px solid var(--rule);
+  }
+  .result h2{
+    font-family:"Inter",system-ui,sans-serif;font-size:13px;font-weight:600;
+    color:var(--muted);margin:0 0 22px;letter-spacing:.005em;
+  }
+  .bars{display:grid;gap:13px}
+  .bar{display:grid;grid-template-columns:minmax(120px,1.1fr) 3fr 58px;gap:14px;align-items:center}
+  .bar .lab{font-family:"Inter",system-ui,sans-serif;font-size:13.5px;color:var(--muted)}
+  .bar .track{background:#232E3B;height:15px;position:relative}
+  .bar .fill{height:100%;background:#6C8299}
+  .bar.hero .fill{background:var(--ink)}
+  .bar.hero .lab{color:var(--ink);font-weight:600}
+  .bar .val{
+    font-family:"Inter",system-ui,sans-serif;font-size:14px;text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  .result figcaption{
+    font-family:"Inter",system-ui,sans-serif;font-size:13.5px;color:var(--muted);
+    margin:20px 0 0;line-height:1.55;
+  }
+
+  /* ---------- sections ---------- */
+  main{padding:0 0 40px}
+  section{padding:64px 0 0}
+  h2.sec{
+    font-family:"Inter",system-ui,sans-serif;
+    font-size:1.02rem;font-weight:600;letter-spacing:-.005em;
+    margin:0 0 6px;padding:0 0 14px;border-bottom:2px solid var(--ink);
+    display:flex;justify-content:space-between;align-items:baseline;gap:16px;
+  }
+  h2.sec .n{color:var(--muted);font-weight:500;font-size:.86rem}
+  h3{
+    font-family:"Inter",system-ui,sans-serif;font-size:.97rem;font-weight:600;
+    margin:38px 0 10px;
+  }
+  p{margin:0 0 20px}
+  section > p:first-of-type{margin-top:26px}
+  a{color:var(--ink);text-decoration-thickness:1px;text-underline-offset:2px}
+  a:hover{color:var(--opposite)}
+  strong{font-weight:600}
+  code{
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.83em;
+    background:var(--wash);padding:1px 5px;border:1px solid var(--rule);
+  }
+
+  /* ---------- verdicts: the page's one bold idea ---------- */
+  .verdicts{display:grid;gap:0;margin:30px 0 26px;border-top:1px solid var(--rule)}
+  .verdict{
+    display:grid;grid-template-columns:112px 1fr;gap:24px;
+    padding:22px 0;border-bottom:1px solid var(--rule);align-items:start;
+  }
+  .tag{
+    font-family:"Inter",system-ui,sans-serif;font-size:11.5px;font-weight:600;
+    letter-spacing:.02em;padding:5px 0 0;
+  }
+  .tag.no{color:var(--opposite)}
+  .tag.yes{color:var(--confirmed)}
+  .tag .mark{display:block;height:3px;width:34px;margin:0 0 8px}
+  .tag.no .mark{background:var(--opposite)}
+  .tag.yes .mark{background:var(--confirmed)}
+  .verdict .body{font-size:.97rem;line-height:1.55}
+  .verdict .body b{display:block;font-weight:600;margin:0 0 5px}
+  .verdict .body span{color:var(--muted)}
+
+  /* ---------- tables ---------- */
+  .scroll{overflow-x:auto;margin:26px 0 10px;-webkit-overflow-scrolling:touch}
+  table{
+    border-collapse:collapse;width:100%;min-width:520px;
+    font-family:"Inter",system-ui,sans-serif;font-size:14px;
+  }
+  caption{
+    text-align:left;color:var(--muted);font-size:13.5px;
+    padding:0 0 12px;line-height:1.5;
+  }
+  th,td{padding:10px 14px 10px 0;text-align:right;border-bottom:1px solid var(--rule)}
+  th:first-child,td:first-child{text-align:left;padding-left:0}
+  thead th{
+    font-weight:600;font-size:12.5px;color:var(--muted);
+    border-bottom:1px solid var(--ink);white-space:nowrap;
+  }
+  tbody tr.best{font-weight:600}
+  tbody tr.best td{border-bottom:1px solid var(--ink)}
+  tbody tr.floor td{color:var(--muted)}
+  td.num{font-variant-numeric:tabular-nums}
+
+  /* ---------- figures ---------- */
+  figure{margin:34px 0 30px}
+  figure img{width:100%;height:auto;display:block;background:var(--plate);
+    border:1px solid var(--rule);padding:14px}
+  figure figcaption{
+    font-family:"Inter",system-ui,sans-serif;font-size:13.5px;color:var(--muted);
+    margin:12px 0 0;line-height:1.55;max-width:62ch;
+  }
+
+  /* ---------- callout ---------- */
+  .note{
+    border-left:2px solid var(--ink);padding:2px 0 2px 22px;margin:28px 0;
+    font-size:.97rem;
+  }
+  .note.warn{border-left-color:var(--opposite)}
+
+  ul{margin:0 0 20px;padding-left:1.1em}
+  li{margin:0 0 9px}
+  li::marker{color:var(--muted)}
+
+  /* ---------- footer ---------- */
+  footer{
+    margin:76px 0 0;padding:34px 0 70px;border-top:1px solid var(--rule);
+    font-family:"Inter",system-ui,sans-serif;font-size:14px;color:var(--muted);
+  }
+  footer p{margin:0 0 12px;max-width:60ch;line-height:1.6}
+  footer a{color:var(--ink)}
+
+  @media (max-width:640px){
+    body{font-size:17.5px}
+    .wrap{padding:0 20px}
+    header.masthead{padding-top:52px}
+    .result{padding:22px 20px}
+    .bar{grid-template-columns:1fr;gap:5px}
+    .bar .track{height:13px}
+    .bar .val{text-align:left}
+    .verdict{grid-template-columns:1fr;gap:10px}
+    section{padding-top:48px}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .bar .fill{animation:grow .9s cubic-bezier(.2,.7,.3,1) both}
+    @keyframes grow{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1)}}
+  }
+  a:focus-visible{outline:2px solid var(--opposite);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="kicker">FlyRank ML Internship &middot; Capstone &middot; Lane 2, Refresh and Content Opportunity Scoring</p>
+  <h1>Which pages should an editor fix first?</h1>
+  <p class="standfirst">Ranking 116,539 web pages by their risk of losing organic search traffic next month &mdash; and finding that two of the signals everyone reaches for point the wrong way.</p>
+  <p class="byline">
+    <span>Ahmed Huzaifa Malik</span>
+    <span>Machine Learning track</span>
+    <span><a href="https://github.com/real-huzaifa/flyrank-internship-ml-track">Repository and notebooks</a></span>
+  </p>
+</header>
+
+<div class="result">
+  <h2>Of the top 50 pages each ranker surfaces, how many really declined?</h2>
+  <div class="bars">
+    <div class="bar"><span class="lab">Random ranking</span><span class="track"><span class="fill" style="width:50.8%"></span></span><span class="val">0.508</span></div>
+    <div class="bar"><span class="lab">Rule baseline</span><span class="track"><span class="fill" style="width:85.6%"></span></span><span class="val">0.856</span></div>
+    <div class="bar"><span class="lab">Logistic regression</span><span class="track"><span class="fill" style="width:89.2%"></span></span><span class="val">0.892</span></div>
+    <div class="bar hero"><span class="lab">Gradient boosting</span><span class="track"><span class="fill" style="width:92.0%"></span></span><span class="val">0.920</span></div>
+  </div>
+  <figcaption>Precision@50 under 5-fold validation grouped by client, so every score is measured on clients the ranker never trained on. The base rate is 0.504.</figcaption>
+</div>
+
+<main>
+
+<section id="abstract">
+  <h2 class="sec"><span>Abstract</span><span class="n">01</span></h2>
+  <div class="measure">
+    <p>A content team that can review roughly 50 pages a week has to choose which 50, and simple decline triggers fire on 44% of a 116,539-page portfolio &mdash; so the scarce resource is attention, not detection. Using one month of Google Search Console data from the FlyRank internship warehouse (2026&#8209;03, 40 clients, 9.8&nbsp;million page-days), I built ten features observable on 31 March and an observed label from the following month: a page declines if its April daily impressions fall more than 20% below its own March daily rate. I compared a transparent hand-written rule against logistic regression and gradient boosting on an identical split grouped by client, and audited the result for leakage by deliberately planting a label-derived feature, by attacking the dominant feature, and by reporting the gap against an optimistic random split. The gradient-boosted model ranks pages at precision@50 of 0.920 against a 0.504 base rate and a 0.856 rule baseline, and the strongest single feature turned out to be the share of the month's impressions falling in its final seven days &mdash; recency, not the half-versus-half trend the rule was built on. The result is decision-support for ordering an editorial queue on one month of one panel; it is not causal, and it says nothing about how any search engine ranks pages.</p>
+  </div>
+</section>
+
+<section id="problem">
+  <h2 class="sec"><span>The decision this supports</span><span class="n">02</span></h2>
+  <div class="measure">
+    <p>An editor opens a content dashboard on Monday morning. Several hundred pages carry some kind of warning flag. She has time for about fifty. Which fifty?</p>
+    <p>That is the entire problem, and it is not a detection problem. Applying three plain triggers &mdash; traffic falling inside the month, low click-through on visible pages, average rank slipping &mdash; flags a large share of the eligible corpus. At 50 reviews a week, working through everything flagged would take years. A binary flag that fires on a substantial fraction of pages tells an editor almost nothing about where to start.</p>
+    <p>So the output has to be an <em>order</em>, not a yes-or-no. I frame this as a scoring and ranking task where the ranking signal is a predicted probability, and I measure it with precision@50, because that is the only part of the ranking anyone will ever see. Accuracy across 116,539 pages would be a number about pages nobody opens.</p>
+    <p>A wrong answer has two costs. A page ranked highly that was fine wastes one of fifty weekly slots. A declining page ranked low keeps declining unattended. Both are measured in editor-hours, which is why the metric sits at the top of the queue rather than across the whole corpus.</p>
+  </div>
+</section>
+
+<section id="data">
+  <h2 class="sec"><span>Data</span><span class="n">03</span></h2>
+  <div class="measure">
+    <p>The FlyRank ML Internship warehouse release, build v20260703, hosted on Hugging Face under gated access. I use one table &mdash; <code>fact_content_daily_performance</code> &mdash; and two of its eighteen monthly partitions. Its grain is one row per report date, client and content item: 9,841,378 rows in March 2026 alone.</p>
+
+    <h3>Windows</h3>
+    <p>The decision moment is 31 March 2026. Features are computed from 1&ndash;31 March; the label is measured across 1&ndash;30 April. The two windows do not overlap by a single day.</p>
+    <p>March has 31 days and April has 30, so every measure is a daily rate rather than a monthly total. Comparing raw sums would have written a 3.2% decline into every page in the portfolio, and the label would have been measuring the calendar.</p>
+
+    <h3>Unit of analysis</h3>
+    <p>One row is one content page belonging to one client, summarised over March. The key is the pair of pseudonymous hashes for client and content, and a grain probe returns no duplicate keys. Those identifiers are used for grouping and joining only, never as model inputs. After filtering to pages with search data available, at least 15 days of March history and at least 30 March impressions, the frame holds <strong>116,539 pages across 40 clients</strong>.</p>
+
+    <h3>What I excluded, and why</h3>
+    <p><strong>The whole content dimension table.</strong> It is a current-state snapshot with no as-of date, and its optimization dates run from late April to early July &mdash; every non-null value falls <em>after</em> the decision moment, some by fourteen weeks. I built a staleness feature from it in an early pass and every value came out negative, which is how the problem surfaced. Word count and content type carry the same defect less visibly: today's word count is not March's.</p>
+    <p><strong>All analytics-platform fields.</strong> Available for only 4.2% of March rows, and availability tracks whether a client purchased that platform at all. A field present for one row in twenty-four is a client fingerprint rather than a content signal.</p>
+    <p><strong>The 90-day query table.</strong> Its grain is finer than the decision, and its fixed window overlaps the label window.</p>
+
+    <h3>Two properties of this data worth stating plainly</h3>
+    <p>Rows where search data is unavailable are <em>zero-filled, not null</em>: 6,230,317 March rows carry a non-null impression count summing to exactly zero. An unfiltered average would quietly include 6.2 million fabricated zeros, so the availability filter is a correctness requirement rather than housekeeping.</p>
+    <p>The analytics availability flag additionally contains 3,018,741 nulls where the search flag contains none. In SQL a null satisfies neither <code>= TRUE</code> nor <code>= FALSE</code>, so filtering with <code>= FALSE</code> silently drops three million rows and the two counts no longer reconcile to the total. <code>IS TRUE</code> is the only form that survives three-valued logic.</p>
+    <p>Finally, 999 pages have no rows at all in the last week of March. They decline at 0.751 against 0.502 for everyone else, so absence itself carries signal. I fill their last-week share with zero and carry an explicit flag, rather than imputing a median that would have claimed they had an ordinary week.</p>
+
+    <p>Everything on this page is public-safe: all identifiers are pseudonymous hashes, and no client names, domains, page URLs or search queries appear anywhere in the paper, the notebooks or the published artifacts.</p>
+  </div>
+</section>
+
+<section id="method">
+  <h2 class="sec"><span>Methodology</span><span class="n">04</span></h2>
+  <div class="measure">
+    <h3>The label</h3>
+    <p>A page is labelled as declining when its April daily impressions fall below 80% of its own March daily rate. This is an outcome observed in a window the features cannot see, not a bucket derived from someone's rule &mdash; a distinction that matters, because a rule-derived label teaches a model the rule rather than the world. The base rate is <strong>50.4%</strong>, close enough to balanced that accuracy would carry almost no information and precision at the top of the queue carries the evaluation instead.</p>
+    <p>Pages present in March but absent from April, 0.9% of the frame, are read as zero April traffic. That is a choice: they may instead have been deleted. This release has no event log, so the two cannot be distinguished.</p>
+
+    <h3>Testing the signals before trusting them</h3>
+    <p>Before writing any rule I checked two signals that sit behind widely used content flags. Both failed, and the failures were more useful than a confirmation would have been.</p>
+  </div>
+
+  <div class="verdicts">
+    <div class="verdict">
+      <span class="tag no"><span class="mark"></span>OPPOSITE</span>
+      <span class="body">
+        <b>Worse average position predicts decline</b>
+        <span>Decline rate <em>falls</em> as rank worsens: 0.583 at positions 1&ndash;3, down to 0.465 at 21&ndash;50. Median daily impressions fall from 50.5 to 12.0 across the same buckets, and a page receiving twelve impressions a day has almost nothing left to lose. This is a floor effect in the label, not a property of the content.</span>
+      </span>
+    </div>
+    <div class="verdict">
+      <span class="tag no"><span class="mark"></span>OPPOSITE</span>
+      <span class="body">
+        <b>Click-through below position peers predicts decline</b>
+        <span>Pages far above their peers decline least, at 0.395; pages below decline most, at 0.592 &mdash; the reverse of the intuition. The deeper problem is that click-through is mostly <em>absent</em> rather than low: 45.2% of pages recorded no clicks at all in March, rising to 92% at rank 50 and beyond. Subtracting a peer median of zero from a value of zero measures nothing.</span>
+      </span>
+    </div>
+    <div class="verdict">
+      <span class="tag yes"><span class="mark"></span>CONFIRMED</span>
+      <span class="body">
+        <b>Within-month momentum predicts decline</b>
+        <span>Comparing a page's second half of March against its own first half gives a monotonic gradient across quintiles: 0.735, 0.559, 0.467, 0.391, 0.364. It holds inside all five volume strata with no reversals across 25 cells, so it is not a volume artifact &mdash; and volume amplifies rather than explains it.</span>
+      </span>
+    </div>
+  </div>
+
+  <figure>
+    <img src="img/fig2_signals.png" alt="Two bar charts. Left: decline rate by average position bucket, decreasing from 0.58 at ranks 1-3 to 0.47 at ranks 21-50, against a dashed base-rate line. Right: decline rate by within-March momentum quintile, decreasing monotonically from 0.74 for fast-falling pages to 0.36 for rising pages.">
+    <figcaption>A signal behind an existing content flag points the wrong way in this data, while a signal computed entirely inside the feature window holds cleanly. Testing both before building is what kept the wrong one out of the rule.</figcaption>
+  </figure>
+
+  <div class="measure">
+    <h3>Features</h3>
+    <p>Ten features, all computable on 31 March: daily impressions, impression-weighted average position, click-through rate, daily clicks, the half-versus-half momentum ratio, the share of the month's impressions falling in its last seven days, a flag for pages with no final-week rows at all, the share of days with any impressions, impression volatility relative to the mean, and the drift in average position between the two halves of the month.</p>
+    <p>One of those is dead, and I am reporting it rather than quietly removing it. The share of days with any impressions came back constant at exactly 1.0 for all 116,539 rows &mdash; every page clearing the 30-impression floor has impressions on every available day. Its permutation importance is exactly zero and removing it changes the headline scores by nothing at all. It is the second time I built that feature and the second time it was degenerate.</p>
+
+    <h3>Baseline</h3>
+    <p>A transparent rule, written and frozen before any model work: a page scores <code>max(0, &minus;momentum) &times; log1p(daily impressions)</code>. In plain words, it ranks a page highly when traffic is already falling inside March <em>and</em> enough traffic remains to be worth saving. Multiplying rather than adding means it needs both, so a collapsing page with two impressions a day and a large stable page both score near zero. Its thresholds came from bucket tables, never from tuning against the evaluation metric.</p>
+
+    <h3>Validation</h3>
+    <p>Five-fold cross-validation grouped by client. Pages belonging to one client share hidden character &mdash; the same site, templates and editorial team &mdash; so a random split lets a model memorise the client and report skill it does not have. The honest question is whether it works on a client it has never seen.</p>
+    <p>I report the gap rather than hide it: grouped validation gives ROC-AUC 0.7298, an optimistic random split gives 0.7493. The <strong>0.0195 difference</strong> is small, which is itself the finding &mdash; client memorisation was not doing much of the work here. Seeds are fixed at zero throughout; scikit-learn 1.6.1, DuckDB 1.3.2.</p>
+
+    <h3>Leakage checks</h3>
+    <ul>
+      <li><strong>Timeline.</strong> Every feature is computed inside March; the label lives in April. No overlap.</li>
+      <li><strong>The harness was tested by breaking it on purpose.</strong> In an earlier notebook I added the label's own input as a feature: ROC-AUC jumped from 0.6942 to 0.9996 and precision@50 hit a perfect 1.000. A test harness that <em>cannot</em> be fooled by a planted leak is a broken harness. I then deleted the feature and kept the honest number.</li>
+      <li><strong>No existing product flags as inputs.</strong> Scores and flags produced by an existing system encode a decision someone already made; using them teaches the old rule rather than the world. The shipped rule is something to beat, never something to consume.</li>
+      <li><strong>The dominant feature was attacked, not celebrated.</strong> Last-week share carries roughly three times the permutation importance of anything else, which is exactly the shape leakage makes. Retraining without it drops ROC-AUC from 0.7298 to 0.6948. A leaked feature collapses the model toward 0.500; a 0.035 drop means the feature is simply strong &mdash; and it should be, since it is the part of the window closest in time to the outcome.</li>
+      <li><strong>Population selection disclosed.</strong> Rows require search data availability in <em>both</em> months, so surviving pages are partly selected on information from the outcome window. That is a choice rather than an error, but hiding it would not be.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="results">
+  <h2 class="sec"><span>Results</span><span class="n">05</span></h2>
+  <div class="measure">
+    <p>All four rankers evaluated on the identical client-grouped split, the same data and the same metrics.</p>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <caption>Model against baseline, 5-fold GroupKFold by client. Base rate 0.504.</caption>
+      <thead>
+        <tr><th>Ranker</th><th>ROC-AUC</th><th>Precision@50</th><th>Precision@100</th></tr>
+      </thead>
+      <tbody>
+        <tr class="floor"><td>Random ranking</td><td class="num">0.500</td><td class="num">0.508</td><td class="num">&mdash;</td></tr>
+        <tr><td>Rule baseline, frozen</td><td class="num">0.640</td><td class="num">0.856</td><td class="num">0.864</td></tr>
+        <tr><td>Logistic regression</td><td class="num">0.700</td><td class="num">0.892</td><td class="num">0.876</td></tr>
+        <tr class="best"><td>Gradient boosting</td><td class="num">0.730</td><td class="num">0.920</td><td class="num">0.912</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="measure">
+    <p>The model beats the rule by 0.090 ROC-AUC and 6.4 points of precision@50. Worth noting what it is beating: the rule itself scores 0.856 against a random floor of 0.508, so this is not a weak baseline flattering a model. Both are doing real work, and the model's margin is earned against a strong opponent.</p>
+  </div>
+
+  <figure>
+    <img src="img/fig1_precision_at_50.png" alt="Bar chart of precision@50 for four rankers: random ranking 0.508, rule baseline 0.856, logistic regression 0.892, gradient boosting 0.920, against a dashed base-rate line at 0.504.">
+    <figcaption>Out of every 50 pages an editor opens, the model surfaces about 46 that really declined; random ordering surfaces about 25.</figcaption>
+  </figure>
+
+  <div class="measure">
+    <h3>What the model leans on</h3>
+    <p>Permutation importance puts the last-week impression share far ahead of everything else, then daily impressions and average position. The finding is that <strong>the final seven days of the feature window carry most of the signal</strong>. Recency beats the half-versus-half comparison the rule was built on &mdash; and once last-week share is available, the momentum ratio that formed the rule's entire basis drops to near-zero importance.</p>
+  </div>
+
+  <figure>
+    <img src="img/fig3_importance.png" alt="Horizontal bar chart of permutation importance across ten features. Last-week impression share is far largest at about +0.126, followed by daily impressions at +0.041 and average position at +0.025; the remaining features are near zero.">
+    <figcaption>Shuffling the last-week share costs about three times more accuracy than shuffling anything else. Retraining without it drops ROC-AUC only from 0.730 to 0.695, which is why this reads as a strong feature rather than a leak.</figcaption>
+  </figure>
+
+  <div class="measure">
+    <h3>Where it is wrong</h3>
+    <p>Error is highest in the middle volume quintiles and lowest among high-volume pages: large pages are easier to call, mid-sized pages are noisiest.</p>
+    <p>The three most confident mistakes share a shape. All were scored above 0.94 and none declined. In each, March's second half collapsed and April recovered to roughly the <em>March average</em> rather than continuing down &mdash; 17.3 to 17.8 daily impressions, 1613 to 1501, 106.5 to 169.1. These are reversion cases: pages that dipped inside the window and bounced back. Using March data alone, "still falling" and "already bottomed out" look identical. That is the model's ceiling, not a bug awaiting a fix.</p>
+
+    <div class="note warn">
+      <p style="margin:0">A number I discarded rather than published: an early run reported a majority-class dummy classifier at precision@50 of 0.768, which looked like a meaningful floor. It is not. A dummy classifier assigns every row the same probability, so its "top 50" is simply the first fifty rows in index order. The honest floor is random ranking at 0.508, and that is what the table above uses.</p>
+    </div>
+  </div>
+</section>
+
+<section id="limitations">
+  <h2 class="sec"><span>Limitations and honest framing</span><span class="n">06</span></h2>
+  <div class="measure">
+    <p><strong>This is one month transition.</strong> A single as-of date, March into April. Seasonality, an algorithm update during March, or one large client's site migration would all be invisible here and indistinguishable from a real pattern. The release holds eighteen monthly partitions; using several as-of dates with a sealed final month would test whether this result is stable over time. I did not do that, so I cannot claim that it is.</p>
+
+    <p><strong>Forty clients of 104, and they are the well-instrumented ones.</strong> The funnel: 67 clients have search-console access, 55 appear in the March partition, 40 survive the availability filter and the eligibility floors. Fifteen clients have search history beginning after 1 March &mdash; their March data does not exist. So this is a result <em>for clients with mature search instrumentation</em>, and the newest third of the panel, arguably where a refresh queue would help most, is absent from it.</p>
+
+    <p><strong>The clients that remain are unevenly weighted.</strong> The largest single client is about a fifth of the frame and the top five are roughly two-thirds of it. "Forty clients" overstates the diversity, and per-fold numbers move accordingly.</p>
+
+    <p><strong>Selection on the outcome window.</strong> The population requires search data availability in both March and April, so pages that vanished from tracking entirely are not in the frame. The analysis is partly conditioning on survival.</p>
+
+    <p><strong>Publish dates cannot be checked.</strong> A page published on 10 March would look like a collapse in any within-March comparison, because its first half is partly pre-launch. The content dimension table has no as-of snapshot, so there is no trustworthy publish date and this cannot be ruled out for any row in the queue. It is the largest unquantified risk in the work.</p>
+
+    <p><strong>No causal claim is available.</strong> This is observational data with no experiment and no control group. The model can rank pages by predicted decline. It cannot show that refreshing them causes recovery, and nothing here describes how any search engine's ranking system works &mdash; what was modelled is outcomes in one portfolio of pages.</p>
+
+    <div class="note">
+      <p style="margin:0"><strong>What can be said, precisely.</strong> On this data, across this one transition, a gradient-boosted model ranks pages by next-month impression decline at precision@50 of 0.920, against a 0.504 base rate and a 0.856 rule baseline, under client-grouped validation. That is observed, and it is decision-support. It is not causal, not validated across time, and not generalised beyond this panel.</p>
+    </div>
+  </div>
+</section>
+
+<section id="recommendations">
+  <h2 class="sec"><span>Ranked recommendations</span><span class="n">07</span></h2>
+  <div class="measure">
+    <p>The deliverable an editor receives is a ranked queue where every row carries one reason code and one action. The model supplies the ordering; the reason codes make the ordering readable, because a ranked list without stated reasons is not something a person can act on with confidence.</p>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <caption>The action playbook across all 116,539 pages, scored out-of-fold. Every code separates from the 0.504 base rate.</caption>
+      <thead>
+        <tr><th>Reason code</th><th>Action</th><th>Pages</th><th>Decline rate</th><th>Median daily impressions</th></tr>
+      </thead>
+      <tbody>
+        <tr class="best"><td>High risk, high value</td><td>Refresh now</td><td class="num">3,682</td><td class="num">0.846</td><td class="num">115.2</td></tr>
+        <tr><td>High risk, low value</td><td>Review later</td><td class="num">7,972</td><td class="num">0.823</td><td class="num">14.3</td></tr>
+        <tr><td>Recent collapse</td><td>Investigate</td><td class="num">5,171</td><td class="num">0.688</td><td class="num">3.5</td></tr>
+        <tr><td>Moderate risk</td><td>Monitor</td><td class="num">20,028</td><td class="num">0.631</td><td class="num">30.2</td></tr>
+        <tr class="floor"><td>Stable</td><td>No action</td><td class="num">79,686</td><td class="num">0.413</td><td class="num">17.7</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="measure">
+    <p><strong>Refresh now</strong> is the week's work: 3,682 pages that combine top-decile risk with real traffic, declining at 0.846. At fifty reviews a week this is more than a year of queue, which is the point &mdash; the ordering inside it is what makes the first fifty worth opening.</p>
+
+    <p><strong>Investigate</strong> exists because of what the model revealed rather than because I planned it. When the strongest feature is the final week of the window, a page whose last week nearly vanished may have a tracking or crawl problem rather than a content problem, and sending an editor to rewrite it would be the wrong response. In practice this code catches small pages &mdash; a median of 3.5 daily impressions &mdash; so it functions as a triage lane for thin, erratic content rather than for large broken pages. Separating those before they reach the refresh queue follows directly from the importance result.</p>
+
+    <p>In the top ten of the queue, ten of ten pages did decline. That is a clean number and also a small and homogeneous one: every one of those pages placed between 0% and 5% of its monthly impressions in the final week, against roughly 23% for a flat page. The model is finding one extreme pattern very reliably. The top ten spans five different clients, which is worth checking &mdash; had they come from a single client, the likeliest explanation would have been that client's tracking breaking rather than any content signal.</p>
+
+    <p><strong>How to read the queue.</strong> Trust the set more than the order. Scores compress quickly below the top, so rank 3 and rank 18 are closer than their positions suggest. Membership in the top fifty is meaningful; the exact sequence within it is not, and an editor should not treat it as a priority ladder.</p>
+
+    <p><strong>What would make any single recommendation wrong</strong>, in the order it concerns me: a publish date inside the feature window, which cannot be checked; seasonal or event traffic that ought to fall and will return unaided; a client-wide tracking break that makes many pages collapse together; and reversion, where a page has already bottomed out and recovers without help.</p>
+  </div>
+</section>
+
+<section id="repro">
+  <h2 class="sec"><span>Reproducibility</span><span class="n">08</span></h2>
+  <div class="measure">
+    <p>Every number on this page is produced by <a href="https://github.com/real-huzaifa/flyrank-internship-ml-track/blob/main/work/notebooks/capstone.ipynb">the capstone notebook</a>, which runs top to bottom against the gated warehouse release. The <a href="https://github.com/real-huzaifa/flyrank-internship-ml-track">repository</a> also holds the assignment notebooks this work was built from: the task framing, the data contract with its deliberate-leak experiment, and the frozen rule baseline.</p>
+    <p>Machine-readable receipts are committed alongside: <code>capstone_metrics.json</code> carries every score in the comparison table with per-fold values, and <code>capstone_summary.json</code> carries the windows, label definition, validation design, leakage-check result, seeds and library versions. The ranked queue is regenerated on every run rather than committed, so no row-level data is published.</p>
+    <p>Random seeds are fixed at zero throughout. Results were produced with scikit-learn 1.6.1 and DuckDB 1.3.2; tree-ensemble numbers can shift slightly between library versions. Warehouse access is gated with instant approval, and the read token is supplied at runtime from a secrets store &mdash; no credential appears in any notebook.</p>
+  </div>
+</section>
+
+<section id="thanks">
+  <h2 class="sec"><span>Acknowledgments and data credit</span><span class="n">09</span></h2>
+  <div class="measure">
+    <p>Built on the FlyRank ML Internship dataset &mdash; <a href="https://flyrank.ai">flyrank.ai</a>. The warehouse release is real, pseudonymised search-performance data covering 104 clients and roughly 79 million page-days, and this work would not exist without it being made available to interns.</p>
+    <p>Thanks to the FlyRank ML track for the sessions on framing, leakage and honest validation. The insistence on testing a signal before building on it is the reason this paper reports two negative results instead of a rule quietly built on a backwards assumption.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>Ahmed Huzaifa Malik &mdash; Machine Learning track, FlyRank AI Internship, 2026. Data Science undergraduate at Pak-Austria Fachhochschule Institute of Applied Sciences and Technology.</p>
+  <p><a href="https://github.com/real-huzaifa/flyrank-internship-ml-track">Repository</a> &nbsp; <a href="https://github.com/real-huzaifa">GitHub</a> &nbsp; <a href="https://www.linkedin.com/in/ahmed-huzaifa-malik">LinkedIn</a></p>
+  <p>No client names, domains, page URLs or search queries appear in this paper or its underlying notebooks. All identifiers are pseudonymous hashes.</p>
+</footer>
+
+</div>
+</body>
+</html>
