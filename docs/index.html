@@ -73,9 +73,9 @@
   .bars{display:grid;gap:13px}
   .bar{display:grid;grid-template-columns:minmax(120px,1.1fr) 3fr 58px;gap:14px;align-items:center}
   .bar .lab{font-family:"Inter",system-ui,sans-serif;font-size:13.5px;color:var(--muted)}
-  .bar .track{background:#232E3B;height:15px;position:relative}
-  .bar .fill{height:100%;background:#6C8299}
-  .bar.hero .fill{background:var(--ink)}
+  .bar .track{display:block;background:#222D3A;height:15px;position:relative;overflow:hidden}
+  .bar .fill{display:block;height:100%;background:#8AA3BC}
+  .bar.hero .fill{background:#EDEFEB}
   .bar.hero .lab{color:var(--ink);font-weight:600}
   .bar .val{
     font-family:"Inter",system-ui,sans-serif;font-size:14px;text-align:right;
@@ -188,10 +188,6 @@
     .bar .val{text-align:left}
     .verdict{grid-template-columns:1fr;gap:10px}
     section{padding-top:48px}
-  }
-  @media (prefers-reduced-motion:no-preference){
-    .bar .fill{animation:grow .9s cubic-bezier(.2,.7,.3,1) both}
-    @keyframes grow{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1)}}
   }
   a:focus-visible{outline:2px solid var(--opposite);outline-offset:3px}
 </style>
